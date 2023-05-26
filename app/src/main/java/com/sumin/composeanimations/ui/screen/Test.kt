@@ -1,9 +1,18 @@
 package com.sumin.composeanimations.ui.screen
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -21,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -40,7 +50,17 @@ fun Test() {
         val isIncreased = remember {
             mutableStateOf(true)
         }
-        val size by animateDpAsState(targetValue = if (isIncreased.value) 200.dp else 100.dp)
+
+        val infiniteTransition = rememberInfiniteTransition()
+
+        val size by infiniteTransition.animateFloat(
+            initialValue = 200F,
+            targetValue = 100F,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2000),
+                repeatMode = RepeatMode.Reverse
+            )
+        )
 
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -52,13 +72,27 @@ fun Test() {
         }
         AnimatedContainer(
             text = "Size",
-            size = size
+            size = size.dp
         )
 
         var isRounded by remember {
             mutableStateOf(false)
         }
-        val radius by animateIntAsState(targetValue = if (!isRounded) 4 else 50)
+        val radius by animateIntAsState(
+            targetValue = if (!isRounded) 4 else 50
+        )
+
+        val degrees by infiniteTransition.animateFloat(
+            initialValue = 0F,
+            targetValue = 360F,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 2000,
+                    easing = LinearEasing
+                ),
+                repeatMode = RepeatMode.Restart
+            )
+        )
 
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -70,7 +104,8 @@ fun Test() {
         }
         AnimatedContainer(
             text = "Shape",
-            radiusPercent = radius
+            radiusPercent = radius,
+            degrees = degrees
         )
 
         var hasBorder by remember {
@@ -133,10 +168,13 @@ private fun AnimatedContainer(
     radiusPercent: Int = 4,
     width: Dp = 0.dp,
     color: Color = Color.Blue,
-    alpha: Float = 1F
+    alpha: Float = 1F,
+    degrees: Float = 0F
 ) {
+    Log.d("TEST_TAG", "Recomposition")
     Box(
         modifier = Modifier
+            .rotate(degrees)
             .clip(RoundedCornerShape(radiusPercent))
             .alpha(alpha)
             .border(width = width, color = Color.Black)
